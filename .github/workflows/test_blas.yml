@@ -34,10 +34,12 @@ jobs:
             export OPENBLAS_CORETYPE="${{ matrix.coretype }}"
           fi
 
+          echo "### x64 / \`${{ matrix.runner }}\` / Target: \`${{ matrix.coretype }}\`" >> $GITHUB_STEP_SUMMARY
+
           SCIPY_VERSIONS=("1.17.1" "1.18.1")
 
           for VER in "${SCIPY_VERSIONS[@]}"; do
-            echo ">>> Testing with SciPy $VER on Target: ${{ matrix.coretype }} <<<"
+            echo ">>> Testing with SciPy $VER on Target:${{ matrix.coretype }} <<<"
             python -m venv "env_$VER"
             
             # Activate virtualenv cross-platform
@@ -49,14 +51,22 @@ jobs:
             
             pip install --upgrade pip
             pip install numpy "scipy==$VER"
-            python test_script.py
+            
+            # Print heading to summary
+            echo "#### SciPy $VER" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            
+            # Run test: displays in console AND prints into the summary block
+            python test_script.py | tee -a $GITHUB_STEP_SUMMARY
+            
+            echo '```' >> $GITHUB_STEP_SUMMARY
             
             deactivate
             rm -rf "env_$VER"
           done
 
   test-arm64:
-    name: "arm64 / ${{ matrix.runner }} / Target: ${{ matrix.coretype }}"
+    name: "arm64 / ${{ matrix.runner }} / Target:${{ matrix.coretype }}"
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -84,10 +94,12 @@ jobs:
             export OPENBLAS_CORETYPE="${{ matrix.coretype }}"
           fi
 
+          echo "### arm64 / \`${{ matrix.runner }}\` / Target: \`${{ matrix.coretype }}\`" >> $GITHUB_STEP_SUMMARY
+
           SCIPY_VERSIONS=("1.17.1" "1.18.1")
 
           for VER in "${SCIPY_VERSIONS[@]}"; do
-            echo ">>> Testing with SciPy $VER on Target: ${{ matrix.coretype }} <<<"
+            echo ">>> Testing with SciPy $VER on Target:${{ matrix.coretype }} <<<"
             python -m venv "env_$VER"
 
             if [ -f "env_$VER/bin/activate" ]; then
@@ -98,7 +110,15 @@ jobs:
 
             pip install --upgrade pip
             pip install numpy "scipy==$VER"
-            python test_script.py
+            
+            # Print heading to summary
+            echo "#### SciPy $VER" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            
+            # Run test: displays in console AND prints into the summary block
+            python test_script.py | tee -a $GITHUB_STEP_SUMMARY
+            
+            echo '```' >> $GITHUB_STEP_SUMMARY
 
             deactivate
             rm -rf "env_$VER"
