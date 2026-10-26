@@ -1,29 +1,6 @@
-import ctypes
 import os
 import platform
-import sys
 import numpy as np
-
-
-def get_openblas_core():
-    """Detect the exact active OpenBLAS micro-architecture core name."""
-    try:
-        import scipy_openblas32
-
-        lib_dir = scipy_openblas32.get_lib_dir()
-        for fname in os.listdir(lib_dir):
-            if "openblas" in fname.lower() and (
-                fname.endswith(".so")
-                or fname.endswith(".dylib")
-                or fname.endswith(".dll")
-            ):
-                lib_path = os.path.join(lib_dir, fname)
-                openblas_lib = ctypes.CDLL(lib_path)
-                openblas_lib.openblas_get_corename.restype = ctypes.c_char_p
-                return openblas_lib.openblas_get_corename().decode("utf-8")
-    except Exception:
-        pass
-    return "UNKNOWN"
 
 
 def _cf_real_fit_model(tlist, a, b, c, d=0):
@@ -65,13 +42,14 @@ def main():
     cpu_arch = platform.machine()
     proc_desc = platform.processor() or "Unknown"
     env_override = os.environ.get("OPENBLAS_CORETYPE", "None (Auto-detected)")
-    active_core = get_openblas_core()
+    config = scipy.show_config(mode='dicts')
+    blas_info = config.get('Build Dependencies', {}).get('blas', {})
 
     print("=" * 80)
     print(f"Host Machine Architecture : {cpu_arch} ({proc_desc})")
     print(f"Operating System          : {platform.system()} {platform.release()}")
     print(f"Requested Target Override : {env_override}")
-    print(f"OpenBLAS Dispatched Core  : {active_core}")
+    print(f"OpenBLAS Dispatched Core  : {blas_info['openblas configuration']}")
     print(f"SciPy Version             : {scipy.__version__}")
     print(f"NumPy Version             : {np.__version__}")
     print("=" * 80)
