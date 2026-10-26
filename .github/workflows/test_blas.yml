@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-x64:
-    name: x64 / ${{ matrix.runner }} / Target: ${{ matrix.coretype }}
+    name: "x64 / ${{ matrix.runner }} / Target: ${{ matrix.coretype }}"
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -56,7 +56,7 @@ jobs:
           done
 
   test-arm64:
-    name: arm64 / ${{ matrix.runner }} / Target: ${{ matrix.coretype }}
+    name: "arm64 / ${{ matrix.runner }} / Target: ${{ matrix.coretype }}"
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
