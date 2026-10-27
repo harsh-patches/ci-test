@@ -4,16 +4,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-x64:
-    name: "x64 / ${{ matrix.runner }} / Target: AUTO"
-    runs-on: ${{ matrix.runner }}
+  test-ubuntu:
+    name: "Run ${{ matrix.run-id }} / ubuntu-latest / Target: AUTO"
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        runner:
-          - ubuntu-latest
-          - windows-latest
-          - macos-15-intel
+        # Add as many run entries as you need (e.g., 5 runs)
+        run-id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,67 +23,14 @@ jobs:
       - name: Run SciPy 1.17.1 & 1.18.1 sequentially
         shell: bash
         run: |
-          echo "### x64 / \`${{ matrix.runner }}\` / Target: \`AUTO\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Run ${{ matrix.run-id }} / \`ubuntu-latest\` / Target: \`AUTO\`" >> $GITHUB_STEP_SUMMARY
 
           SCIPY_VERSIONS=("1.17.1" "1.18.1")
 
           for VER in "${SCIPY_VERSIONS[@]}"; do
             echo ">>> Testing with SciPy $VER on Target:AUTO <<<"
             python -m venv "env_$VER"
-
-            if [ -f "env_$VER/bin/activate" ]; then
-              source "env_$VER/bin/activate"
-            else
-              source "env_$VER/Scripts/activate"
-            fi
-
-            python -m pip install --upgrade pip
-            python -m pip install numpy "scipy==$VER" qutip
-
-            echo "#### SciPy $VER" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-
-            python test_script.py | tee -a $GITHUB_STEP_SUMMARY
-
-            echo '```' >> $GITHUB_STEP_SUMMARY
-
-            deactivate
-            rm -rf "env_$VER"
-          done
-
-  test-arm64:
-    name: "arm64 / ${{ matrix.runner }} / Target: AUTO"
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runner:
-          - ubuntu-24.04-arm
-          - windows-11-arm
-          - macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Run SciPy 1.17.1 & 1.18.1 sequentially
-        shell: bash
-        run: |
-          echo "### arm64 / \`${{ matrix.runner }}\` / Target: \`AUTO\`" >> $GITHUB_STEP_SUMMARY
-
-          SCIPY_VERSIONS=("1.17.1" "1.18.1")
-
-          for VER in "${SCIPY_VERSIONS[@]}"; do
-            echo ">>> Testing with SciPy $VER on Target:AUTO <<<"
-            python -m venv "env_$VER"
-
-            if [ -f "env_$VER/bin/activate" ]; then
-              source "env_$VER/bin/activate"
-            else
-              source "env_$VER/Scripts/activate"
-            fi
+            source "env_$VER/bin/activate"
 
             python -m pip install --upgrade pip
             python -m pip install numpy "scipy==$VER" qutip
