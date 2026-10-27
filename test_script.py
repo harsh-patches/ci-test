@@ -97,6 +97,9 @@ def run_heom_crosscheck():
         max_depth=max_depth,
         options={"nsteps": 15000, "rtol": 1e-12, "atol": 1e-12},
     )
+
+    HEOM_corr_fit.options["progress_bar"] = ''
+    
     results_corr_fit = HEOM_corr_fit.run(psi0 * psi0.dag(), tlist, e_ops=e_ops)
     rc_exp = np.real(results_corr_fit.expect[0])
 
