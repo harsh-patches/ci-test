@@ -103,6 +103,7 @@ def run_heom_crosscheck():
     results_corr_fit = HEOM_corr_fit.run(psi0 * psi0.dag(), tlist, e_ops=e_ops)
     rc_exp = np.real(results_corr_fit.expect[0])
 
+    print(fit_info["params_real"])
     # Failing assertion (known to fail on some OpenBLAS/QuTiP builds)
     np.testing.assert_allclose(dr_exp, rc_exp, atol=0.02, rtol=0)
 
@@ -188,8 +189,8 @@ def main():
     fit_real_res = _unpack(packed_params, num_params_r)
     fit_imag_res = _unpack(packed_params_ig, num_params_ig)
 
-    print_full_precision("Real Fit Output", fit_real_res)
-    print_full_precision("Imag Fit Output", fit_imag_res)
+    #print_full_precision("Real Fit Output", fit_real_res)
+    #print_full_precision("Imag Fit Output", fit_imag_res)
     print("=" * 80 + "\n")
 
 
