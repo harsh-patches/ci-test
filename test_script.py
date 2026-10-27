@@ -34,6 +34,79 @@ def print_full_precision(name, arr):
     print(f"Decimal (max precision):\n{formatted_dec}")
 
 
+def run_heom_crosscheck():
+    """Cross-check RWA mesolve vs HEOM solver (from the provided snippet)."""
+    from qutip import (
+        QobjEvo,
+        UnderDampedEnvironment,
+        basis,
+        about,
+        mesolve,
+        sigmam,
+        sigmax,
+        sigmaz,
+    )
+    from qutip.solver.heom import HEOMSolver
+
+    about()
+
+    # Base parameters
+    Delta = 2 * np.pi
+    omega_d = Delta
+    A = 0.01 * Delta
+    gamma = 0.005 * Delta / (2 * np.pi)
+
+    psi0 = basis(2, 0)
+    e_ops = [sigmaz()]
+    T = 2 * np.pi / omega_d
+    tlist = np.linspace(0, 1000 * T, 500)
+
+    # 1. RWA mesolve run (produces dr_exp)
+    H_RWA = (Delta - omega_d) * 0.5 * sigmaz() + A / 4 * sigmax()
+    c_ops_me_RWA = [np.sqrt(gamma) * sigmam()]
+    driv_RWA_res = mesolve(H_RWA, psi0, tlist, c_ops=c_ops_me_RWA, e_ops=e_ops)
+    dr_exp = driv_RWA_res.expect[0]
+
+    # 2. Time-dependent Hamiltonian for HEOM
+    def f(t):
+        return np.sin(omega_d * t)
+
+    H0 = Delta / 2.0 * sigmaz()
+    H1 = [A / 2.0 * sigmax(), f]
+    H = [H0, H1]
+
+    # 3. HEOM solver run (produces rc_exp)
+    max_depth = 4
+    wsamp = 2 * np.pi
+    w0 = 5 * 2 * np.pi
+    gamma_heom = 1.9 * w0
+
+    lambd = np.sqrt(
+        0.5
+        * gamma
+        * ((w0**2 - wsamp**2) ** 2 + (gamma_heom**2) * ((wsamp) ** 2))
+        / (gamma_heom * wsamp)
+    )
+
+    bath = UnderDampedEnvironment(lam=lambd, w0=w0, gamma=gamma_heom, T=0)
+    fit_times = np.linspace(0, 5, 1000)
+    exp_bath, fit_info = bath.approximate(
+        "cf", fit_times, Ni_max=1, Nr_max=2, target_rmse=None
+    )
+
+    HEOM_corr_fit = HEOMSolver(
+        QobjEvo(H),
+        (exp_bath, sigmax()),
+        max_depth=max_depth,
+        options={"nsteps": 15000, "rtol": 1e-12, "atol": 1e-12},
+    )
+    results_corr_fit = HEOM_corr_fit.run(psi0 * psi0.dag(), tlist, e_ops=e_ops)
+    rc_exp = np.real(results_corr_fit.expect[0])
+
+    # Failing assertion (known to fail on some OpenBLAS/QuTiP builds)
+    np.testing.assert_allclose(dr_exp, rc_exp, atol=0.02, rtol=0)
+
+
 def main():
     import scipy
     from scipy.optimize import curve_fit
@@ -53,6 +126,17 @@ def main():
     print(f"SciPy Version             : {scipy.__version__}")
     print(f"NumPy Version             : {np.__version__}")
     print("=" * 80)
+
+    # --- QuTiP / HEOM cross-check ---
+    print("\n[HEOM Cross-check] Running RWA mesolve vs HEOM ...")
+    try:
+        run_heom_crosscheck()
+        print("[HEOM Cross-check] PASSED (dr_exp ~= rc_exp within atol=0.02)")
+    except AssertionError as exc:
+        print("[HEOM Cross-check] FAILED (assert_allclose):")
+        print(f"  {exc}")
+    except Exception as exc:
+        print(f"[HEOM Cross-check] ERROR while running: {type(exc).__name__}: {exc}")
 
     # Use paths relative to current script/repository directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
