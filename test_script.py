@@ -40,15 +40,12 @@ def run_heom_crosscheck():
         QobjEvo,
         UnderDampedEnvironment,
         basis,
-        about,
         mesolve,
         sigmam,
         sigmax,
         sigmaz,
     )
     from qutip.solver.heom import HEOMSolver
-
-    about()
 
     # Base parameters
     Delta = 2 * np.pi
