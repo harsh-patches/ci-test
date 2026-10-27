@@ -36,6 +36,7 @@ def print_full_precision(name, arr):
 
 def run_heom_crosscheck():
     """Cross-check RWA mesolve vs HEOM solver (from the provided snippet)."""
+    import re
     from qutip import (
         QobjEvo,
         UnderDampedEnvironment,
@@ -104,6 +105,7 @@ def run_heom_crosscheck():
     rc_exp = np.real(results_corr_fit.expect[0])
 
     print(fit_info["params_real"])
+    print(re.search(r"A RMSE.*?real part of |of the correlation function\.", fit_info["summary"], re.DOTALL).group(0))
     # Failing assertion (known to fail on some OpenBLAS/QuTiP builds)
     np.testing.assert_allclose(dr_exp, rc_exp, atol=0.02, rtol=0)
 
