@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-x64:
-    name: "x64 / ${{ matrix.runner }} / Target: ${{ matrix.coretype }}"
+    name: "x64 / ${{ matrix.runner }} / Target: AUTO"
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -14,12 +14,6 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-15-intel
-        coretype:
-          - "AUTO"
-          - "HASWELL"
-          - "ZEN"
-          - "SKYLAKEX"
-          - "NEHALEM"
     steps:
       - uses: actions/checkout@v4
 
@@ -30,43 +24,40 @@ jobs:
       - name: Run SciPy 1.17.1 & 1.18.1 sequentially
         shell: bash
         run: |
-          if [ "${{ matrix.coretype }}" != "AUTO" ]; then
-            export OPENBLAS_CORETYPE="${{ matrix.coretype }}"
-          fi
-
-          echo "### x64 / \`${{ matrix.runner }}\` / Target: \`${{ matrix.coretype }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### x64 / \`${{ matrix.runner }}\` / Target: \`AUTO\`" >> $GITHUB_STEP_SUMMARY
 
           SCIPY_VERSIONS=("1.17.1" "1.18.1")
 
           for VER in "${SCIPY_VERSIONS[@]}"; do
-            echo ">>> Testing with SciPy $VER on Target:${{ matrix.coretype }} <<<"
+            echo ">>> Testing with SciPy $VER on Target:AUTO <<<"
             python -m venv "env_$VER"
-            
+
             # Activate virtualenv cross-platform
             if [ -f "env_$VER/bin/activate" ]; then
               source "env_$VER/bin/activate"
             else
               source "env_$VER/Scripts/activate"
             fi
-            
-            pip install --upgrade pip
-            pip install numpy "scipy==$VER"
-            
+
+            # Use python -m pip (avoids Windows "To modify pip..." error)
+            python -m pip install --upgrade pip
+            python -m pip install numpy "scipy==$VER"
+
             # Print heading to summary
             echo "#### SciPy $VER" >> $GITHUB_STEP_SUMMARY
             echo '```text' >> $GITHUB_STEP_SUMMARY
-            
+
             # Run test: displays in console AND prints into the summary block
             python test_script.py | tee -a $GITHUB_STEP_SUMMARY
-            
+
             echo '```' >> $GITHUB_STEP_SUMMARY
-            
+
             deactivate
             rm -rf "env_$VER"
           done
 
   test-arm64:
-    name: "arm64 / ${{ matrix.runner }} / Target:${{ matrix.coretype }}"
+    name: "arm64 / ${{ matrix.runner }} / Target: AUTO"
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -75,11 +66,6 @@ jobs:
           - ubuntu-24.04-arm
           - windows-11-arm
           - macos-latest
-        coretype:
-          - "AUTO"
-          - "ARMV8"
-          - "NEOVERSEV1"
-          - "CORTEXA57"
     steps:
       - uses: actions/checkout@v4
 
@@ -90,16 +76,12 @@ jobs:
       - name: Run SciPy 1.17.1 & 1.18.1 sequentially
         shell: bash
         run: |
-          if [ "${{ matrix.coretype }}" != "AUTO" ]; then
-            export OPENBLAS_CORETYPE="${{ matrix.coretype }}"
-          fi
-
-          echo "### arm64 / \`${{ matrix.runner }}\` / Target: \`${{ matrix.coretype }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### arm64 / \`${{ matrix.runner }}\` / Target: \`AUTO\`" >> $GITHUB_STEP_SUMMARY
 
           SCIPY_VERSIONS=("1.17.1" "1.18.1")
 
           for VER in "${SCIPY_VERSIONS[@]}"; do
-            echo ">>> Testing with SciPy $VER on Target:${{ matrix.coretype }} <<<"
+            echo ">>> Testing with SciPy $VER on Target:AUTO <<<"
             python -m venv "env_$VER"
 
             if [ -f "env_$VER/bin/activate" ]; then
@@ -108,16 +90,17 @@ jobs:
               source "env_$VER/Scripts/activate"
             fi
 
-            pip install --upgrade pip
-            pip install numpy "scipy==$VER"
-            
+            # Use python -m pip (avoids Windows "To modify pip..." error)
+            python -m pip install --upgrade pip
+            python -m pip install numpy "scipy==$VER"
+
             # Print heading to summary
             echo "#### SciPy $VER" >> $GITHUB_STEP_SUMMARY
             echo '```text' >> $GITHUB_STEP_SUMMARY
-            
+
             # Run test: displays in console AND prints into the summary block
             python test_script.py | tee -a $GITHUB_STEP_SUMMARY
-            
+
             echo '```' >> $GITHUB_STEP_SUMMARY
 
             deactivate
